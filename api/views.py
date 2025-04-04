@@ -27,11 +27,12 @@ class TransacaoView(APIView):
 
 class EstatisticaView(APIView):
     def get(self, request):
+        TOTAL_EM_SEGUNDOS = 60
         now = datetime.now()
 
         recentes = {
             k: v for k, v in data.items()
-            if (now - datetime.strptime(k, "%Y-%m-%d %H:%M:%S")).total_seconds() <= 60
+            if (now - datetime.strptime(k, "%Y-%m-%d %H:%M:%S")).total_seconds() <= TOTAL_EM_SEGUNDOS
         }
 
         if not recentes:
