@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import TransacaoSerializer
 from datetime import datetime
 
-data = {}
+data = {} 
 class TransacaoView(APIView):
     def post(self, request):
         serializer = TransacaoSerializer(data=request.data)
@@ -14,36 +14,36 @@ class TransacaoView(APIView):
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        if now not in data:
-            data[now] = {
-                'data': serializer.validated_data['dataHora'].strftime("%Y-%m-%d %H:%M:%S"),
-                'valor': serializer.validated_data['valor']
-            }
-        print(data) 
-        return Response(data)
-    
+        data[now] = {
+            'dataHora': serializer.validated_data['dataHora'].strftime("%Y-%m-%d %H:%M:%S"),
+            'valor': serializer.validated_data['valor']
+        }
+
+        return Response(status=status.HTTP_201_CREATED)
+
     def delete(self, request):
         data.clear()
         return Response(status=status.HTTP_200_OK)
 
-
 class EstatisticaView(APIView):
     def get(self, request):
-        if not data:
-            return Response('0', status=status.HTTP_204_NO_CONTENT)
-        
-        
-        count = len(data)
-        amount = sum(item['valor'] for item in data.values())
-        avg = amount / count
-        max_ = max(item['valor'] for item in data.values())
-        min_ = min(item['valor'] for item in data.values())
+        now = datetime.now()
 
-        estatistica = {
-            'count': count,
-            'sum': amount,
-            'avg': avg,
-            'min': min_,
-            'max': max_
+        recentes = {
+            k: v for k, v in data.items()
+            if (now - datetime.strptime(k, "%Y-%m-%d %H:%M:%S")).total_seconds() <= 60
         }
+
+        if not recentes:
+            return Response('0', status=status.HTTP_204_NO_CONTENT)
+
+        valores = [item['valor'] for item in recentes.values()]
+        estatistica = {
+            'count': len(valores),
+            'sum': sum(valores),
+            'avg': sum(valores) / len(valores),
+            'min': min(valores),
+            'max': max(valores)
+        }
+
         return Response(estatistica, status=status.HTTP_200_OK)
